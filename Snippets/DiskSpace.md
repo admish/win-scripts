@@ -1,21 +1,23 @@
-
+Show available space on C 
 ```powershell
 Get-PSDrive C
 Get-Volume -DriveLetter C
 Get-WmiObject -Class Win32_LogicalDisk 
 ```
 
+Similar to DU in Linux
 ```powershell
 ## Top 5 largest folders
 diskusage /t=5 /h C:\
 
 ## Top 5 Largest files
-diskusage /u=5 /h c:\
+diskusage /u=5 /h C:\
 
+## Top 5 Largest user profiles
 diskusage /t=5 /h C:\Users\
 
 ## Folders greater than 1GB
-diskusage /minFileSize=1073741824 /h c:\windows
+diskusage /minFileSize=1073741824 /h C:\Windows
 ```
 
 Show free space for all drives
