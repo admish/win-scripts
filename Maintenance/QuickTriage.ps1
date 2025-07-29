@@ -53,3 +53,12 @@ shutdown /r /f /t 0
 cleanmgr /sagerun:1 /VeryLowDisk /AUTOCLEAN | Out-Null
 
 
+Get-Acl C:\Windows\Temp | Format-List
+
+icacls C:\Windows\Temp /reset /t /c /l
+
+# To reset permissions for a folder: 
+icacls C:\Windows\Temp /reset
+
+# To reset permissions for a folder, its files, and subfolders: 
+icacls C:\Windows\Temp /reset /t /c /l
