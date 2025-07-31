@@ -1,7 +1,7 @@
 #Requires -version 5
 
 ## Scrape Adobe's release notes for the latest Windows release
-$ReleaseURI = curl -s https://helpx.adobe.com/acrobat/release-note/release-notes-acrobat-reader.html
+$ReleaseURI = curl.exe -s https://helpx.adobe.com/acrobat/release-note/release-notes-acrobat-reader.html
 $RegexSyntax = [regex]::new('<a href="(https://www\.adobe\.com/devnet-docs/acrobatetk/tools/ReleaseNotesDC/[^"]+)"[^>]*>(DC [^<]+)</a>', [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
 $Version = $RegexSyntax.Match($ReleaseURI).Groups[2].Value | cut -d "(" -f2 | cut -d ")" -f1 | sed 's/\.//g'
 
