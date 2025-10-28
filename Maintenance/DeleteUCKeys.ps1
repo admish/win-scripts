@@ -29,7 +29,19 @@
     schtasks /change /Enable /TN "\Microsoft\Windows\AppxDeploymentClient\UCPD velocity"
     ```
 #>
+<# --------------------------- [Elevate admin privileges] --------------------------- #>
+$currentUser = [System.Security.Principal.WindowsIdentity]::GetCurrent()
+$currentUserPrincipal = new-object System.Security.Principal.WindowsPrincipal($currentUser)
+if (! $currentUserPrincipal.IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator))
+{
+    $newProcess = new-object System.Diagnostics.ProcessStartInfo "PowerShell";
+    $newProcess.Arguments = $myInvocation.MyCommand.Definition;
+    $newProcess.Verb = "runas";
+    [System.Diagnostics.Process]::Start($newProcess);
+    exit;
+}
 
+<# --------------------------- [Begin Changes] --------------------------- #>
 # Define the path for the temporary copy of reg.exe (to bypass ucpd.sys restrictions)
 $tempReg = "$env:TEMP\upwreg.exe"
 $regPath = "$env:windir\System32\reg.exe"
@@ -115,3 +127,4 @@ Stop-Process -Name explorer -Force
 Start-Process explorer.exe
 
 Write-Host "`nDone."
+
