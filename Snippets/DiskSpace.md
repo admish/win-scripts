@@ -1,106 +1,93 @@
-## Evaluate
-### Show drive use for C Drive
+## Assessment
+Quick one-line Assessment 
 ```powershell
-Get-PSDrive C
+$env:COMPUTERNAME;Get-PSDrive C;"`n";diskusage /g:1 /x /h /t:5 C:\;"`n";diskusage /g:1 /x /h /u:5 C:\ 
 ```
 
-### Top 5 Largest Folders
+View system disk details, including free space available
 ```powershell
-diskusage /t=5 /h C:\
+Get-PSDrive 'C'
+```
+```powershell
+Get-Volume -DriveLetter C
 ```
 
-### Top 5 Largest Files
+## Manage Shadow Copies
+### Reduce Restore Point Size
+List restore points (Newest first)
 ```powershell
-diskusage /u=5 /h c:\
+Get-ComputerRestorePoint | Sort-Object CreationTime -Descending
+```
+Details on restore points
+```powershell
+vssadmin list shadows
+vssadmin list shadows /For=C:
+## or
+Get-ComputerRestorePoint | Format-List
 ```
 
-### Top 5 Largest User Folders
+Set maximal size allowed for restore points
 ```powershell
-diskusage /t=5 /h C:\Users\
+vssadmin resize shadowstorage /for=C: /on=C: /maxsize=5%
+```
+Delete the oldest shadow copy of volume C
+```powershell
+vssadmin delete shadows /for=C: /oldest
 ```
 
-### Folders greater than 1GB
+### Remove Dell SARemediation
+Uninstall all Dell pre-installed bloatware.... 
 ```powershell
-diskusage /minFileSize=1073741824 /h c:\windows
+$xPath = "$env:ProgramData\Dell\SARemediation\SystemRepair\Snapshots\Backup"
+Get-ChildItem -Path "$xPath\*" -Force -Recurse | Remove-Item -Force -Recurse -ErrorAction SilentlyContinue  
 ```
 
-## Recover 
-### Clean User Profile Folders
-```powershell
-irm xga.io/clrusr | iex
+## Clean Windows & System Files
+Microsoft has minimal documentation for their Disk Cleanup Utility. But when it works it will clear out a lot of unnecessary files.
+```PowerShell
+cleanmgr /SAGERUN:1 /VeryLowDisk /AUTOCLEAN | Out-Null
 ```
 
-run same script above, but on Windows 10 or older systems without `Invoke-RestMethod`
+Remove downloads for **Windows Updates**
 ```powershell
-$wc = New-Object System.Net.WebClient; $wc.DownloadFile("https://raw.githubusercontent.com/My-Random-Thoughts/Various-Code/refs/heads/master/CleanUserProfileFolders.ps1", "C:\Windows\Temp\CleanUserProfiles.ps1")
-cd C:\Windows\Temp
-.\CleanUserProfiles.ps1
-del CleanUserProfiles.ps1
+Remove-Item -Path "$env:SystemRoot\SoftwareDistribution\Download" -Recurse -Force
 ```
-
-Change execution policy to allow scripts to run, until exiting Powershell
+#### Remove System Temp Files
 ```powershell
-Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process
+Get-ChildItem -Path "$env:SystemRoot\Temp\*" -Force -Recurse | Remove-Item -Force -Recurse -ErrorAction SilentlyContinue  
 ```
-
-### Clear out system temp folder
-```powershell
-Get-ChildItem -Path "$env:SystemRoot\Temp\*" -Force -Recurse | Remove-Item -Force -Recurse -ErrorAction SilentlyContinue 
-```
-
-### Empty/Reset System Recycle Bin
+#### Empty/Reset System Recycle Bin
+Deleting the `C:\$Recycle.Bin\` folder will empty it for all users on the system. (Will also reset it and fix any issues.)
 ```powershell
 Get-ChildItem -LiteralPath 'C:\$Recycle.Bin\' -Force | Remove-Item -Force -Recurse -ErrorAction SilentlyContinue
 ```
 
-Show contents of Recycle Bin
+## Empty Recycle Bin
+Normal methods like `dir` won't work for this folder. Use the following to view the contents of Recycle Bin
 ```powershell
 Get-ChildItem -LiteralPath 'C:\$Recycle.Bin\' -Force | gci -Force
 ```
 
-### Remove Windows Updates Download Cache
+Using the "Force" parameter doesn't prompt for confirmation to clear all recycle bins. An alternative is to replace `-Force` with `-Confirm:$false`.
 ```powershell
-Remove-Item -Path "$env:SystemRoot\SoftwareDistribution\Download" -Recurse -Force
+Clear-RecycleBin -Force
+Clear-RecycleBin -Confirm:$false
+
+Clear-RecycleBin -Force -Confirm:$false
 ```
 
-## Other useful commands...
+Deleting the Recycle Bin folder will also force it to reset itself
 ```powershell
-Get-Volume -DriveLetter C 
+Get-ChildItem -LiteralPath 'C:\$Recycle.Bin\' -Force | Remove-Item -Force -Recurse -ErrorAction SilentlyContinue  
+## or in batch
+cmd /c "rd /s /q %SystemDrive%\$Recycle.bin"
 ```
 
-```powershell
-Get-WmiObject -Class Win32_LogicalDisk
-```
-
-Show free space for all drives
-```powershell
-Get-WmiObject -Class Win32_LogicalDisk | Format-Table DeviceId, MediaType, @{n="Size";e={[math]::Round($_.Size/1GB,2)}},@{n="FreeSpace";e={[math]::Round($_.FreeSpace/1GB,2)}}
-```
-
-total disk space and free percentage on each drive
-```powershell
-Get-WmiObject -Class Win32_LogicalDisk | Select-Object -Property DeviceID, VolumeName, @{Label='FreeSpace (Gb)'; expression={($_.FreeSpace/1GB).ToString('F2')}}, @{Label='Total (Gb)'; expression={($_.Size/1GB).ToString('F2')}}, @{label='FreePercent'; expression={[Math]::Round(($_.freespace / $_.size) * 100, 2)}}|ft
-```
-
-PowerShell Get Disk Space via Get-CimInstance Command
-```powershell
-Get-CimInstance -Class win32_logicaldisk | Format-Table DeviceId, MediaType, @{n="Size";e={[math]::Round($_.Size/1GB,2)}},@{n="FreeSpace";e={[math]::Round($_.FreeSpace/1GB,2)}}
-```
+## Clean User Profile Folders
 
 ```powershell
-Get-CimInstance -Class Win32_LogicalDisk |Select-Object -Property DeviceID, VolumeName, @{Label='FreeSpace (Gb)'; expression={($_.FreeSpace/1GB).ToString('F2')}},@{Label='Total (Gb)'; expression={($_.Size/1GB).ToString('F2')}},@{label='FreePercent'; expression={[Math]::Round(($_.freespace / $_.size) * 100, 2)}}|ft
-```
-
-### List all files
-- `dir/a` list hidden folders
-- `dir /a:d` list all directories
-- `dir /a:h` list all hidden files
-
-list all files and folders
-```batch
-dir /a:hd
-```
-
-```powershell
-Function ls-alt {Invoke-Expression "gci $Args -Force" | sort LastWriteTime -Descending}
+$ClrProf = "https://raw.githubusercontent.com/My-Random-Thoughts/Various-Code/refs/heads/master/CleanUserProfileFolders.ps1"
+$wc = New-Object System.Net.WebClient; $wc.DownloadFile("$ClrProf", "C:\Windows\Temp\CleanUserProfiles.ps1")
+PowerShell.exe -ExecutionPolicy Bypass -File "C:\Windows\Temp\CleanUserProfiles.ps1"
+del "C:\Windows\Temp\CleanUserProfiles.ps1"
 ```
