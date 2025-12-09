@@ -41,7 +41,7 @@ w32tm /resync /nowait
 Write-Host "$(Get-Date -Format u) `n" -ForegroundColor Green
 
 ### Restore default power schemes
-powercfg -restoredefaultschemes
+#powercfg -restoredefaultschemes
 
 ### Configure power management settings
 Write-Host @opt1 " [+] Disabling the hibernate feature" 
@@ -56,14 +56,20 @@ powercfg -Change monitor-timeout-ac 0
 powercfg -Change disk-timeout-ac 0
 powercfg -Change standby-timeout-ac 0
 powercfg -Change hibernate-timeout-ac 0
+
+Write-Host @opt1 " [+] No action when closing lid while using AC power"
 powercfg -setACvalueIndex scheme_current sub_buttons lidAction 0
+# powercfg -setacvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 4f971e89-eebd-4455-a8de-9e59040e7347 5ca83367-6e45-459f-a27b-476b1d01c936 0
 
 # Write-Host @opt1 "...Disable timeouts while using battery" 
 # powercfg -Change monitor-timeout-dc 10
 # powercfg -Change disk-timeout-dc 0
 # powercfg -Change standby-timeout-dc 0
 # powercfg -Change hibernate-timeout-dc 0
+
+# Write-Host @opt1 " [+] No action when closing lid while using battery power"
 # powercfg -setDCvalueIndex scheme_current sub_buttons lidAction 0
+# powercfg -setdcvalueindex 381b4222-f694-41f0-9685-ff5bb260df2e 4f971e89-eebd-4455-a8de-9e59040e7347 5ca83367-6e45-459f-a27b-476b1d01c936 0
 
 ### Remove password expiration from enabled local Administrators 
 Write-Host @opt1 " [+] Removing password expiration from Administrators" 
