@@ -13,35 +13,21 @@
 .NOTES
     The other workaround would be to disable the ucpd.sys driver, reboot the computer, run the migration and then reenable the driver.
     
-    Temporarily Disable the UCPD Driver:
-    
-    ```
-    sc config ucpd start= disabled
-    schtasks /change /Disable /TN "\Microsoft\Windows\AppxDeploymentClient\UCPD velocity"
-    ```
-
-    Reboot the machine to unload the driver.  
-    Run Transwiz and complete the migration.  
-    Re-enable the driver afterwards:  
-    
-    ```
-    sc config ucpd start= auto
-    schtasks /change /Enable /TN "\Microsoft\Windows\AppxDeploymentClient\UCPD velocity"
-    ```
+    1. Temporarily Disable the UCPD Driver:
+        ```
+        sc config ucpd start= disabled
+        schtasks /change /Disable /TN "\Microsoft\Windows\AppxDeploymentClient\UCPD velocity"
+        ```
+    2. Reboot the machine to unload the driver.  
+    3. Run Transwiz and complete the migration.  
+    4. Re-enable the driver afterwards:  
+        ```
+        sc config ucpd start= auto
+        schtasks /change /Enable /TN "\Microsoft\Windows\AppxDeploymentClient\UCPD velocity"
+        ```
 #>
-<# --------------------------- [Elevate admin privileges] --------------------------- #>
-$currentUser = [System.Security.Principal.WindowsIdentity]::GetCurrent()
-$currentUserPrincipal = new-object System.Security.Principal.WindowsPrincipal($currentUser)
-if (! $currentUserPrincipal.IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator))
-{
-    $newProcess = new-object System.Diagnostics.ProcessStartInfo "PowerShell";
-    $newProcess.Arguments = $myInvocation.MyCommand.Definition;
-    $newProcess.Verb = "runas";
-    [System.Diagnostics.Process]::Start($newProcess);
-    exit;
-}
 
-<# --------------------------- [Begin Changes] --------------------------- #>
+<# --------------------------- [Begin Script] --------------------------- #>
 # Define the path for the temporary copy of reg.exe (to bypass ucpd.sys restrictions)
 $tempReg = "$env:TEMP\upwreg.exe"
 $regPath = "$env:windir\System32\reg.exe"
@@ -127,4 +113,5 @@ Stop-Process -Name explorer -Force
 Start-Process explorer.exe
 
 Write-Host "`nDone."
+
 
